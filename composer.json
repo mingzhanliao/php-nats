@@ -1,12 +1,21 @@
 {
+  "name": "kaycn/php-nats",
+  "description": "Nats client",
   "require": {
     "php": "^8.0"
   },
+  "authors": [
+    {
+      "name": "liaomingzhan",
+      "email": "liaomingzhan@gmail.com"
+    }
+  ],
   "autoload": {
     "psr-4": {
       "kaycn\\PhpNats\\": "src/"
     }
   },
+  "license": "MIT",
   "autoload-dev": {
     "psr-4": {
       "tests\\": "tests/"
