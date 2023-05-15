@@ -136,10 +136,18 @@ class NatsTransport
         return $this->stream;
     }
 
-    public function ping()
+    public function ping(): string
     {
         $payload = sprintf('%s %s%s', 'PING', null, self::CR_LF);
         $this->write($payload);
+        return $this->receive();
+    }
+
+    public function pong(): string
+    {
+        $payload = sprintf('%s %s%s', 'PONG', null, self::CR_LF);
+        $this->write($payload);
+        return $this->receive();
     }
 
     public function close(): void
