@@ -57,24 +57,23 @@ class NatsTransport
             throw new \RuntimeException('server connect failed');
         }
         $this->serverInfo = $serverInfo;
+        $this->connect();
     }
 
     public function getServerInfo(){
         return $this->serverInfo;
     }
 
-    public function connect(): string
+    protected function connect(): string
     {
-        //send connect message
-//        $connectOptions = json_encode([
-//            'verbose' => true,
-//            'lang' => 'php',
-//            'version' => '1.0.0',
-//            'name' => 'kaycn-phpnats'
-//        ]);
         $payload = sprintf('%s %s%s', NatsProtocolOperation::CONNECT, $this->connectOption->__toString(), self::CR_LF);
         $this->write($payload);
-        return $this->receive();
+        $msg = $this->receive();
+        if($this->connectOption->isVerbose() && $msg != NatsProtocolOperation::ACK.self::CR_LF){
+            $this->close();
+            throw new \RuntimeException('connection failed');
+        }
+        return trim($msg);
     }
 
     protected function write(string $payload): void
@@ -123,7 +122,9 @@ class NatsTransport
         } else {
             $line = fgets($this->getStream());
         }
-
+        if($line === false) {
+            return '';
+        }
         return $line;
     }
 
@@ -147,20 +148,28 @@ class NatsTransport
         $this->stream = null;
     }
 
-    public function publish($subject, string $payload)
+    public function publish($subject, string $payload): bool
     {
         $message = sprintf('%s %s', $subject, strlen($payload)) . self::CR_LF . $payload;
         $payload = sprintf('%s %s%s', NatsProtocolOperation::PUB, $message, self::CR_LF);
         $this->write($payload);
-        return $this->receive();
+        if($this->connectOption->isVerbose() && $this->receive() != NatsProtocolOperation::ACK.self::CR_LF){
+            $this->close();
+            throw new \RuntimeException('Pushing failed');
+        }
+        return true;
     }
 
-    public function subscribe(string $subject, int $uid = 1)
+    public function subscribe(string $subject, int $uid = 1): bool
     {
         $message = sprintf('%s %s', $subject, $uid);
         $payload = sprintf('%s %s%s', NatsProtocolOperation::SUB, $message, self::CR_LF);
         $this->write($payload);
-        return $this->receive();
+        if ($this->connectOption->isVerbose() && $this->receive() != NatsProtocolOperation::ACK.self::CR_LF){
+            $this->close();
+            throw new \RuntimeException('subscribe failed');
+        }
+        return true;
     }
 
 }
