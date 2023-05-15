@@ -126,8 +126,8 @@ class NatsTransport
             return '';
         }
         if($line == 'PING'.self::CR_LF){
+            $line = $this->receive();
             $this->pong();
-            return $this->receive();
         }
         return $line;
     }
