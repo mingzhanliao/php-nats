@@ -125,6 +125,10 @@ class NatsTransport
         if($line === false) {
             return '';
         }
+        if($line == 'PING'.self::CR_LF){
+            $this->pong();
+            return '';
+        }
         return $line;
     }
 
